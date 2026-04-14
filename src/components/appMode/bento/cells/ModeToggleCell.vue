@@ -28,20 +28,13 @@ import WorkflowActionsDropdown from '@/components/common/WorkflowActionsDropdown
 }
 
 /* Neutralize the dropdown's outer pill so the bento cell itself
-   provides the button surface. The inner two Buttons (mode-toggle
-   icon + App ▾ trigger) keep their own hover/active states. */
+   provides the button surface. The inner two Buttons keep their
+   natural sizing (icon button has m-1 inset; "App ▾" trigger has
+   h-10), matching the graph-mode version's spacing inside the pill. */
 .mode-toggle-cell :deep(.bg-secondary-background) {
   background: transparent !important;
   border-radius: 0 !important;
   width: 100%;
-  height: 100%;
   padding: 0 !important;
-  gap: 2px;
-}
-
-/* Inner buttons stay interactive but don't force their own fixed
-   heights; inherit the cell's height instead. */
-.mode-toggle-cell :deep(button) {
-  height: 100%;
 }
 </style>
