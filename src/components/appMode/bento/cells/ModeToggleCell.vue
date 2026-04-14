@@ -1,7 +1,14 @@
 <script setup lang="ts">
 /**
  * ModeToggleCell — wraps the existing WorkflowActionsDropdown that
- * provides the App ↔ Graph mode toggle, telemetered as the bento source.
+ * provides the App ↔ Graph mode toggle.
+ *
+ * The dropdown component renders its icon + label + chevron inside a
+ * rounded-pill wrapper. Inside a bento cell we don't want that pill —
+ * the cell IS the button background. The :deep() overrides below
+ * neutralize the wrapper's own rounding, background, and fixed sizing
+ * so the cell's subtle fill shows through and the interactive bits
+ * (mode-toggle icon button + dropdown trigger button) sit inside it.
  */
 import WorkflowActionsDropdown from '@/components/common/WorkflowActionsDropdown.vue'
 </script>
@@ -18,11 +25,23 @@ import WorkflowActionsDropdown from '@/components/common/WorkflowActionsDropdown
   width: 100%;
   height: 100%;
   align-items: center;
-  padding: 0 8px;
 }
 
-.mode-toggle-cell :deep(*) {
-  /* Inherit cell sizing — the dropdown's own background is fine */
-  pointer-events: auto;
+/* Neutralize the dropdown's outer pill so the bento cell itself
+   provides the button surface. The inner two Buttons (mode-toggle
+   icon + App ▾ trigger) keep their own hover/active states. */
+.mode-toggle-cell :deep(.bg-secondary-background) {
+  background: transparent !important;
+  border-radius: 0 !important;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+  gap: 2px;
+}
+
+/* Inner buttons stay interactive but don't force their own fixed
+   heights; inherit the cell's height instead. */
+.mode-toggle-cell :deep(button) {
+  height: 100%;
 }
 </style>
