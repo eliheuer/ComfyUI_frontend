@@ -117,10 +117,12 @@ function dragDrop(e: DragEvent) {
         <TopbarSubscribeButton />
       </div>
     </div>
-    <BentoView
+    <div
       v-if="showBentoView"
-      class="h-[calc(100%-var(--workflow-tabs-height))] w-full"
-    />
+      class="relative h-[calc(100%-var(--workflow-tabs-height))] w-full"
+    >
+      <BentoView class="absolute inset-0" />
+    </div>
     <Splitter
       v-else
       :key="splitterKey"

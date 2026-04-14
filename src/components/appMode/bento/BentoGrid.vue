@@ -169,9 +169,11 @@ function cellStyle(cell: BentoCellPlacement) {
 
 <style scoped>
 .bento-grid {
+  /* Absolute fill eliminates width/height-inheritance ambiguity through
+     nested Vue components. Parent must be position: relative (or absolute). */
+  position: absolute;
+  inset: 0;
   display: grid;
-  width: 100%;
-  height: 100%;
   box-sizing: border-box;
   background-color: var(--p-content-background, #1a1a1a);
   overflow: hidden;

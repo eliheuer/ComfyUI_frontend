@@ -162,8 +162,7 @@ const cells = computed<BentoCellPlacement[]>(() => {
 
 <style scoped>
 .bento-view {
-  width: 100%;
-  height: 100%;
+  position: relative;
   background-color: var(--p-content-background, #1a1a1a);
 }
 
