@@ -112,8 +112,9 @@ const cells = computed<BentoCellPlacement[]>(() => {
     kind: 'system-feedback'
   })
 
-  // Run (bottom-right) — both col and row anchor to end
-  out.push({ id: 'run', col: -3, row: -2, colSpan: 2, kind: 'system-run' })
+  // Run (bottom-right) — 3 cols wide mirroring the feedback cell on
+  // the opposite corner. col: -4 + colSpan: 3 covers the last 3 cols.
+  out.push({ id: 'run', col: -4, row: -2, colSpan: 3, kind: 'system-run' })
 
   // Stub input/output cells removed — BentoGrid's fillEmpty prop now
   // paints ghost cells across every unoccupied grid position, which
