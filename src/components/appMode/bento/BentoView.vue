@@ -107,52 +107,10 @@ const cells = computed<BentoCellPlacement[]>(() => {
   // Run (bottom-right) — both col and row anchor to end
   out.push({ id: 'run', col: -3, row: -2, colSpan: 2, kind: 'system-run' })
 
-  // Stub input cells matching mockup density
-  out.push({ id: 'input-1', col: 4, row: 1, colSpan: 4, kind: 'input' })
-  out.push({ id: 'input-2', col: 4, row: 2, kind: 'input' })
-  out.push({ id: 'input-3', col: 5, row: 2, kind: 'input' })
-  out.push({ id: 'input-4', col: 6, row: 2, kind: 'input' })
-  out.push({ id: 'input-5', col: 7, row: 2, kind: 'input' })
-  out.push({
-    id: 'input-6',
-    col: 4,
-    row: 3,
-    colSpan: 4,
-    rowSpan: 3,
-    kind: 'input'
-  })
-  out.push({
-    id: 'input-7',
-    col: 2,
-    row: 2,
-    colSpan: 2,
-    rowSpan: 3,
-    kind: 'input'
-  })
-  out.push({ id: 'input-8', col: 2, row: 6, kind: 'input' })
-  out.push({ id: 'input-9', col: 3, row: 6, kind: 'input' })
-  out.push({
-    id: 'input-10',
-    col: 2,
-    row: 7,
-    colSpan: 6,
-    rowSpan: 2,
-    kind: 'input'
-  })
-  out.push({ id: 'input-11', col: 1, row: 5, rowSpan: 2, kind: 'input' })
-
-  // Stub output cells
-  out.push({
-    id: 'output-hero',
-    col: 8,
-    row: 1,
-    colSpan: 5,
-    rowSpan: 5,
-    kind: 'output'
-  })
-  out.push({ id: 'output-2', col: 8, row: 6, colSpan: 5, kind: 'output' })
-  out.push({ id: 'output-3', col: 8, row: 7, colSpan: 5, kind: 'output' })
-  out.push({ id: 'output-4', col: 8, row: 8, colSpan: 3, kind: 'output' })
+  // Stub input/output cells removed — BentoGrid's fillEmpty prop now
+  // paints ghost cells across every unoccupied grid position, which
+  // visualizes the full grid structure without hardcoded layout.
+  // Real input/output cells will replace ghosts in the next milestone.
 
   return out
 })
@@ -160,7 +118,7 @@ const cells = computed<BentoCellPlacement[]>(() => {
 
 <template>
   <div class="bento-view">
-    <BentoGrid :cells="cells">
+    <BentoGrid :cells="cells" fill-empty>
       <template v-for="cell in cells" :key="cell.id" #[cell.id]>
         <IconCell
           v-if="cell.kind === 'system-builder'"

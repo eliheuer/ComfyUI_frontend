@@ -40,11 +40,16 @@ const props = withDefaults(
      *  to absorb whatever slack the viewport has — so cells stay aligned
      *  to the outer margin on all sides. */
     minGap?: number
+    /** Prototype-only: render a ghost cell at every unoccupied grid
+     *  position so the whole grid is visible. Remove when real
+     *  content populates the canvas. */
+    fillEmpty?: boolean
   }>(),
   {
     cellSize: 48,
     outerPadding: 16,
-    minGap: 8
+    minGap: 8,
+    fillEmpty: false
   }
 )
 
@@ -85,6 +90,43 @@ const gridStyle = computed(() => ({
   gridTemplateRows: `repeat(${rows.value}, ${props.cellSize}px)`
 }))
 
+// Resolve negative CSS Grid indices (-1, -2, ...) to 1-indexed positions
+// based on the current track count. CSS line -k = line (N + 2 - k) for
+// N tracks, so the track starting at that line has number (N + 2 - k).
+function resolvePos(v: number, total: number): number {
+  if (v > 0) return v
+  return total + 2 + v
+}
+
+// Ghost cells fill every unoccupied grid position — prototype visual
+// so the full grid structure is visible before real content lands.
+const ghostCells = computed<BentoCellPlacement[]>(() => {
+  if (!props.fillEmpty || cols.value < 1 || rows.value < 1) return []
+
+  const occupied = new Set<string>()
+  for (const cell of props.cells) {
+    const c0 = resolvePos(cell.col, cols.value)
+    const r0 = resolvePos(cell.row, rows.value)
+    const cSpan = cell.colSpan ?? 1
+    const rSpan = cell.rowSpan ?? 1
+    for (let r = r0; r < r0 + rSpan; r++) {
+      for (let c = c0; c < c0 + cSpan; c++) {
+        occupied.add(`${c},${r}`)
+      }
+    }
+  }
+
+  const ghosts: BentoCellPlacement[] = []
+  for (let r = 1; r <= rows.value; r++) {
+    for (let c = 1; c <= cols.value; c++) {
+      if (!occupied.has(`${c},${r}`)) {
+        ghosts.push({ id: `__ghost-${c}-${r}`, col: c, row: r, kind: 'ghost' })
+      }
+    }
+  }
+  return ghosts
+})
+
 function cellStyle(cell: BentoCellPlacement) {
   const colSpan = cell.colSpan ?? 1
   const rowSpan = cell.rowSpan ?? 1
@@ -102,6 +144,16 @@ function cellStyle(cell: BentoCellPlacement) {
     :style="gridStyle"
     data-testid="bento-grid"
   >
+    <!-- Ghost cells (fillEmpty=true) render beneath real cells, showing
+         the grid structure. aria-hidden so they don't pollute the a11y tree. -->
+    <div
+      v-for="ghost in ghostCells"
+      :key="ghost.id"
+      class="bento-cell bento-cell--ghost"
+      :style="cellStyle(ghost)"
+      aria-hidden="true"
+      :data-cell-id="ghost.id"
+    />
     <div
       v-for="cell in cells"
       :key="cell.id"
@@ -133,11 +185,19 @@ function cellStyle(cell: BentoCellPlacement) {
   min-height: 0;
 }
 
-/* Any cell with rendered slot content gets the subtle fill.
+/* Real cells with rendered slot content get the subtle fill.
    Truly empty cells (no slot content) have no children → no background,
    keeping the runtime canvas composed rather than gridded. */
 .bento-cell:has(> *) {
   background-color: var(--p-surface-800, #2a2a2a);
   border-radius: 4px;
+}
+
+/* Ghost cells (fillEmpty prototype) always show the fill so the
+   grid structure is visible regardless of slot content. */
+.bento-cell--ghost {
+  background-color: var(--p-surface-800, #2a2a2a);
+  border-radius: 4px;
+  opacity: 0.6;
 }
 </style>
