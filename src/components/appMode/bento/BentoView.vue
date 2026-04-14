@@ -27,6 +27,7 @@ import FeedbackCell from './cells/FeedbackCell.vue'
 import ModeToggleCell from './cells/ModeToggleCell.vue'
 import InputsCell from './cells/InputsCell.vue'
 import OutputsCell from './cells/OutputsCell.vue'
+import BatchCountCell from './cells/BatchCountCell.vue'
 
 import { useAppMode } from '@/composables/useAppMode'
 import { useAppModeStore } from '@/stores/appModeStore'
@@ -113,6 +114,16 @@ const cells = computed<BentoCellPlacement[]>(() => {
   // the opposite corner. col: -4 + colSpan: 3 covers the last 3 cols.
   out.push({ id: 'run', col: -4, row: -2, colSpan: 3, kind: 'system-run' })
 
+  // Batch count (one row above Run, same column span). First label/
+  // widget pair broken into its own bento cell — pilots Phase 2.
+  out.push({
+    id: 'batch-count',
+    col: -4,
+    row: -3,
+    colSpan: 3,
+    kind: 'system-batch-count'
+  })
+
   // Phase 1 default layout: single hero output cell on the left,
   // single inputs column cell on the right. Stretched large so both
   // breathe. These are container cells that host the existing
@@ -182,6 +193,7 @@ const cells = computed<BentoCellPlacement[]>(() => {
         <ModeToggleCell v-else-if="cell.kind === 'system-mode-toggle'" />
         <FeedbackCell v-else-if="cell.kind === 'system-feedback'" />
         <RunCell v-else-if="cell.kind === 'system-run'" />
+        <BatchCountCell v-else-if="cell.kind === 'system-batch-count'" />
         <InputsCell v-else-if="cell.kind === 'inputs'" />
         <OutputsCell v-else-if="cell.kind === 'outputs'" />
         <div v-else class="bento-stub" :data-stub-kind="cell.kind" />
