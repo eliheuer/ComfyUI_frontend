@@ -15,9 +15,18 @@ const commandStore = useCommandStore()
 async function handleClick(e: Event) {
   const priority = 'shiftKey' in e && (e as KeyboardEvent | MouseEvent).shiftKey
   const commandId = priority ? 'Comfy.QueuePromptFront' : 'Comfy.QueuePrompt'
-  await commandStore.execute(commandId, {
-    metadata: { trigger_source: 'linear' }
-  })
+  try {
+    await commandStore.execute(commandId, {
+      metadata: {
+        subscribe_to_run: false,
+        trigger_source: 'linear'
+      }
+    })
+  } catch (error) {
+    // Surface failures in the console so we can diagnose instead of
+    // the button silently doing nothing.
+    console.error('[RunCell] Queue prompt failed:', error)
+  }
 }
 </script>
 
