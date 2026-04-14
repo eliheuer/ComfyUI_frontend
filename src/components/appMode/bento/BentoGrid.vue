@@ -38,27 +38,32 @@ const props = withDefaults(
     outerPadding?: number
     /** Gutter between cells (px). Defaults to 8. */
     gutter?: number
+    /** Maximum 1×1 cell side length (px). On large viewports the cell
+     *  would otherwise grow past button-scale; this caps it. */
+    maxCellSize?: number
   }>(),
   {
     cols: 12,
     rows: 8,
     outerPadding: 16,
-    gutter: 8
+    gutter: 8,
+    maxCellSize: 48
   }
 )
 
 const gridStyle = computed(() => {
-  // Square 1×1 cells: side length = the smaller of (fit-width, fit-height).
-  // Uses container query units (cqi=inline-size, cqb=block-size) so the
-  // grid always fits the visible viewport in both dimensions.
-  // Whichever dimension has slack becomes the letterbox margin.
+  // Square 1×1 cells: side length = the smaller of (fit-width, fit-height, cap).
+  // cqi/cqb are container query units so the grid always fits the viewport;
+  // the cap keeps cells near button-scale on large screens rather than
+  // inflating them to fill space. Whichever dimension has slack becomes
+  // letterbox margin.
   const widthFit = `calc((100cqi - ${props.outerPadding * 2}px - ${
     (props.cols - 1) * props.gutter
   }px) / ${props.cols})`
   const heightFit = `calc((100cqb - ${props.outerPadding * 2}px - ${
     (props.rows - 1) * props.gutter
   }px) / ${props.rows})`
-  const cellSize = `min(${widthFit}, ${heightFit})`
+  const cellSize = `min(${widthFit}, ${heightFit}, ${props.maxCellSize}px)`
 
   return {
     padding: `${props.outerPadding}px`,
