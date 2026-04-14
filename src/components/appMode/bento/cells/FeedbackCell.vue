@@ -50,4 +50,19 @@ const { t } = useI18n()
   white-space: nowrap;
   overflow: hidden;
 }
+
+/* TypeformPopoverButton uses variant="inverted" which renders a
+   white button — too loud inside a dark bento cell. Mute it to
+   match the cell text color and let the cell bg show through. */
+.feedback-cell :deep(button),
+.feedback-cell :deep(a) {
+  background-color: transparent !important;
+  color: var(--p-text-muted-color, #a1a1a1) !important;
+}
+
+.feedback-cell :deep(button:hover),
+.feedback-cell :deep(a:hover) {
+  background-color: var(--p-surface-700, #3a3a3a) !important;
+  color: var(--p-text-color, #fafafa) !important;
+}
 </style>
