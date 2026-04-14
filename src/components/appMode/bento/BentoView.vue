@@ -162,7 +162,11 @@ const cells = computed<BentoCellPlacement[]>(() => {
 
 <style scoped>
 .bento-view {
-  position: relative;
+  /* Fill the parent wrapper (LinearView sets position:relative on it)
+     and serve as the positioning context for the absolutely-positioned
+     BentoGrid inside. */
+  position: absolute;
+  inset: 0;
   background-color: var(--p-content-background, #1a1a1a);
 }
 

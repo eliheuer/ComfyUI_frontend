@@ -121,7 +121,7 @@ function dragDrop(e: DragEvent) {
       v-if="showBentoView"
       class="relative h-[calc(100%-var(--workflow-tabs-height))] w-full"
     >
-      <BentoView class="absolute inset-0" />
+      <BentoView />
     </div>
     <Splitter
       v-else
