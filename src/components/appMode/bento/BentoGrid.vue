@@ -56,14 +56,17 @@ const props = withDefaults(
 const gridEl = useTemplateRef<HTMLElement>('gridEl')
 const { width, height } = useElementSize(gridEl)
 
+// useElementSize defaults to 'content-box' measurement — the reported
+// width/height already exclude the element's padding. So `available`
+// IS the usable track area; no further subtraction.
+
 // Max track count that fits given min gap (tightest packing).
 const trackCount = (available: number) => {
-  const usable = available - props.outerPadding * 2
-  if (usable < props.cellSize) return 1
-  // N * cellSize + (N - 1) * minGap <= usable
+  if (available < props.cellSize) return 1
+  // N * cellSize + (N - 1) * minGap <= available
   return Math.max(
     1,
-    Math.floor((usable + props.minGap) / (props.cellSize + props.minGap))
+    Math.floor((available + props.minGap) / (props.cellSize + props.minGap))
   )
 }
 
@@ -72,9 +75,8 @@ const trackCount = (available: number) => {
 // the bottom or right edge.
 const axisGap = (available: number, trackN: number) => {
   if (trackN <= 1) return props.minGap
-  const usable = available - props.outerPadding * 2
   const cellsTotal = trackN * props.cellSize
-  return (usable - cellsTotal) / (trackN - 1)
+  return (available - cellsTotal) / (trackN - 1)
 }
 
 const cols = computed(() => trackCount(width.value))
