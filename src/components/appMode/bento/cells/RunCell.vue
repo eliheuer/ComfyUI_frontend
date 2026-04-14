@@ -23,18 +23,24 @@ function handleClick(e: Event) {
     data-testid="bento-run-cell"
     @click="handleClick"
   >
+    <i class="run-cell__icon icon-[lucide--play]" />
     {{ t('menu.run') }}
   </button>
 </template>
 
 <style scoped>
 .run-cell {
+  display: flex;
   width: 100%;
   height: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: none;
   border-radius: 4px;
-  background-color: #2eb27c;
-  color: #0a0a0a;
+  /* GitHub Primer success-button green */
+  background-color: #2da44e;
+  color: #ffffff;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -42,10 +48,15 @@ function handleClick(e: Event) {
 }
 
 .run-cell:hover {
-  background-color: #3fc28d;
+  background-color: #2c974b;
 }
 
 .run-cell:active {
-  background-color: #28a06f;
+  background-color: #298e46;
+}
+
+.run-cell__icon {
+  width: 16px;
+  height: 16px;
 }
 </style>
