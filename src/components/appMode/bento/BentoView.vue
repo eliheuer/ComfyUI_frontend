@@ -25,6 +25,8 @@ import IconCell from './cells/IconCell.vue'
 import RunCell from './cells/RunCell.vue'
 import FeedbackCell from './cells/FeedbackCell.vue'
 import ModeToggleCell from './cells/ModeToggleCell.vue'
+import InputsCell from './cells/InputsCell.vue'
+import OutputsCell from './cells/OutputsCell.vue'
 
 import { useAppMode } from '@/composables/useAppMode'
 import { useAppModeStore } from '@/stores/appModeStore'
@@ -37,11 +39,6 @@ import {
   openShareDialog,
   prefetchShareDialog
 } from '@/platform/workflow/sharing/composables/lazyShareDialog'
-
-const props = defineProps<{
-  /** Click handler for the Run cell. Provided by LinearView. */
-  onRunClick?: (e: Event) => void | Promise<void>
-}>()
 
 const { t } = useI18n()
 const { enableAppBuilder } = useAppMode()
@@ -116,10 +113,35 @@ const cells = computed<BentoCellPlacement[]>(() => {
   // the opposite corner. col: -4 + colSpan: 3 covers the last 3 cols.
   out.push({ id: 'run', col: -4, row: -2, colSpan: 3, kind: 'system-run' })
 
-  // Stub input/output cells removed — BentoGrid's fillEmpty prop now
-  // paints ghost cells across every unoccupied grid position, which
-  // visualizes the full grid structure without hardcoded layout.
-  // Real input/output cells will replace ghosts in the next milestone.
+  // Phase 1 default layout: single hero output cell on the left,
+  // single inputs column cell on the right. Stretched large so both
+  // breathe. These are container cells that host the existing
+  // LinearPreview / AppModeWidgetList components for now.
+  //
+  // Col indices assume a typical ~20-col grid at desktop width. At
+  // narrower viewports the grid has fewer columns and these cells
+  // still occupy most of the available space via negative-index
+  // right anchoring.
+  //
+  // Outputs hero: col 4 .. col -8 (stops 7 cols before right edge),
+  //               rows 1 .. -3 (stops before the bottom system row)
+  out.push({
+    id: 'outputs',
+    col: 4,
+    row: 1,
+    colSpan: 14,
+    rowSpan: 10,
+    kind: 'outputs'
+  })
+  // Inputs column: 6 cols wide on the right, stops before Run row
+  out.push({
+    id: 'inputs',
+    col: -7,
+    row: 1,
+    colSpan: 6,
+    rowSpan: 10,
+    kind: 'inputs'
+  })
 
   return out
 })
@@ -159,10 +181,9 @@ const cells = computed<BentoCellPlacement[]>(() => {
         />
         <ModeToggleCell v-else-if="cell.kind === 'system-mode-toggle'" />
         <FeedbackCell v-else-if="cell.kind === 'system-feedback'" />
-        <RunCell
-          v-else-if="cell.kind === 'system-run'"
-          :on-click="props.onRunClick"
-        />
+        <RunCell v-else-if="cell.kind === 'system-run'" />
+        <InputsCell v-else-if="cell.kind === 'inputs'" />
+        <OutputsCell v-else-if="cell.kind === 'outputs'" />
         <div v-else class="bento-stub" :data-stub-kind="cell.kind" />
       </template>
     </BentoGrid>

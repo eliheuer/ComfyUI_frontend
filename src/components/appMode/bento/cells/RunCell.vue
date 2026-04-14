@@ -1,18 +1,23 @@
 <script setup lang="ts">
 /**
- * RunCell — system-pinned cell containing the Run action.
- * Prototype: minimal styling, accent fill, sentence-case label.
+ * RunCell — system-pinned cell that triggers workflow execution.
+ *
+ * Dispatches the same commands LinearControls does: Comfy.QueuePromptFront
+ * with shift held (priority queue), Comfy.QueuePrompt otherwise.
  */
 import { useI18n } from 'vue-i18n'
 
-const props = defineProps<{
-  onClick?: (e: Event) => void | Promise<void>
-}>()
+import { useCommandStore } from '@/stores/commandStore'
 
 const { t } = useI18n()
+const commandStore = useCommandStore()
 
-function handleClick(e: Event) {
-  void props.onClick?.(e)
+async function handleClick(e: Event) {
+  const priority = 'shiftKey' in e && (e as KeyboardEvent | MouseEvent).shiftKey
+  const commandId = priority ? 'Comfy.QueuePromptFront' : 'Comfy.QueuePrompt'
+  await commandStore.execute(commandId, {
+    metadata: { trigger_source: 'linear' }
+  })
 }
 </script>
 
