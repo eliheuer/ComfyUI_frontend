@@ -27,52 +27,33 @@ export interface BentoCellPlacement {
 
 const props = withDefaults(
   defineProps<{
-    /** Total grid columns. Defaults to 12. */
-    cols?: number
-    /** Total grid rows. Defaults to 8. The grid always fits this many
-     *  rows in the visible viewport — never scrolls. */
-    rows?: number
-    /** Cell placements. Each cell's <slot> name is its id. */
+    /** 1×1 cell side length (px). Fixed — grid auto-fills viewport at this size. */
+    cellSize?: number
+    /** Cell placements. Each cell's <slot> name is its id.
+     *  col/row accept negative values as CSS Grid end-anchored indices
+     *  (-1 = last track, -2 = second-to-last, etc.). */
     cells: BentoCellPlacement[]
-    /** Outer margin around the grid (px). Defaults to 16. */
+    /** Outer margin around the grid (px). Defaults to gutter value. */
     outerPadding?: number
-    /** Gutter between cells (px). Defaults to 8. */
+    /** Gutter between cells (px). */
     gutter?: number
-    /** Maximum 1×1 cell side length (px). On large viewports the cell
-     *  would otherwise grow past button-scale; this caps it. */
-    maxCellSize?: number
   }>(),
   {
-    cols: 12,
-    rows: 8,
-    outerPadding: 16,
+    cellSize: 48,
     gutter: 8,
-    maxCellSize: 48
+    outerPadding: 8
   }
 )
 
 const gridStyle = computed(() => {
-  // Square 1×1 cells: side length = the smaller of (fit-width, fit-height, cap).
-  // cqi/cqb are container query units so the grid always fits the viewport;
-  // the cap keeps cells near button-scale on large screens rather than
-  // inflating them to fill space. Whichever dimension has slack becomes
-  // letterbox margin.
-  const widthFit = `calc((100cqi - ${props.outerPadding * 2}px - ${
-    (props.cols - 1) * props.gutter
-  }px) / ${props.cols})`
-  const heightFit = `calc((100cqb - ${props.outerPadding * 2}px - ${
-    (props.rows - 1) * props.gutter
-  }px) / ${props.rows})`
-  const cellSize = `min(${widthFit}, ${heightFit}, ${props.maxCellSize}px)`
-
+  // auto-fill creates as many tracks as fit the container at cellSize,
+  // so the grid grows/shrinks with the viewport. Cells placed at negative
+  // indices (col: -2, row: -1 etc.) anchor to the right/bottom.
   return {
     padding: `${props.outerPadding}px`,
     gap: `${props.gutter}px`,
-    gridTemplateColumns: `repeat(${props.cols}, ${cellSize})`,
-    gridAutoRows: cellSize,
-    // Center the grid in the container — letterbox on the slack axis.
-    justifyContent: 'center',
-    alignContent: 'center'
+    gridTemplateColumns: `repeat(auto-fill, ${props.cellSize}px)`,
+    gridTemplateRows: `repeat(auto-fill, ${props.cellSize}px)`
   }
 })
 
@@ -103,8 +84,6 @@ function cellStyle(cell: BentoCellPlacement) {
 
 <style scoped>
 .bento-grid {
-  /* size (vs inline-size) gives us cqb units for height-aware sizing */
-  container-type: size;
   display: grid;
   width: 100%;
   height: 100%;

@@ -19,8 +19,8 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 
-import BentoGrid from './BentoGrid.vue';
-import type { BentoCellPlacement } from './BentoGrid.vue';
+import BentoGrid from './BentoGrid.vue'
+import type { BentoCellPlacement } from './BentoGrid.vue'
 import IconCell from './cells/IconCell.vue'
 import RunCell from './cells/RunCell.vue'
 import HelpCell from './cells/HelpCell.vue'
@@ -101,11 +101,11 @@ const cells = computed<BentoCellPlacement[]>(() => {
     kind: 'system-mode-toggle'
   })
 
-  // Help (bottom-left)
-  out.push({ id: 'help', col: 1, row: 8, kind: 'system-help' })
+  // Help (bottom-left) — row: -2 anchors to last row regardless of grid size
+  out.push({ id: 'help', col: 1, row: -2, kind: 'system-help' })
 
-  // Run (bottom-right)
-  out.push({ id: 'run', col: 11, row: 8, colSpan: 2, kind: 'system-run' })
+  // Run (bottom-right) — both col and row anchor to end
+  out.push({ id: 'run', col: -3, row: -2, colSpan: 2, kind: 'system-run' })
 
   // Stub input cells matching mockup density
   out.push({ id: 'input-1', col: 4, row: 1, colSpan: 4, kind: 'input' })
