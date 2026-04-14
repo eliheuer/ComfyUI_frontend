@@ -23,7 +23,7 @@ import BentoGrid from './BentoGrid.vue'
 import type { BentoCellPlacement } from './BentoGrid.vue'
 import IconCell from './cells/IconCell.vue'
 import RunCell from './cells/RunCell.vue'
-import HelpCell from './cells/HelpCell.vue'
+import FeedbackCell from './cells/FeedbackCell.vue'
 import ModeToggleCell from './cells/ModeToggleCell.vue'
 
 import { useAppMode } from '@/composables/useAppMode'
@@ -101,8 +101,16 @@ const cells = computed<BentoCellPlacement[]>(() => {
     kind: 'system-mode-toggle'
   })
 
-  // Help (bottom-left) — row: -2 anchors to last row regardless of grid size
-  out.push({ id: 'help', col: 1, row: -2, kind: 'system-help' })
+  // Feedback (bottom-left) — 3 cols wide so the "App mode in beta /
+  // Give feedback" text fits next to the Typeform button.
+  // row: -2 anchors to last row regardless of grid size.
+  out.push({
+    id: 'feedback',
+    col: 1,
+    row: -2,
+    colSpan: 3,
+    kind: 'system-feedback'
+  })
 
   // Run (bottom-right) — both col and row anchor to end
   out.push({ id: 'run', col: -3, row: -2, colSpan: 2, kind: 'system-run' })
@@ -149,7 +157,7 @@ const cells = computed<BentoCellPlacement[]>(() => {
           :on-activate="showApps"
         />
         <ModeToggleCell v-else-if="cell.kind === 'system-mode-toggle'" />
-        <HelpCell v-else-if="cell.kind === 'system-help'" />
+        <FeedbackCell v-else-if="cell.kind === 'system-feedback'" />
         <RunCell
           v-else-if="cell.kind === 'system-run'"
           :on-click="props.onRunClick"
