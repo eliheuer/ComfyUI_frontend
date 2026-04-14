@@ -110,17 +110,16 @@ const cells = computed<BentoCellPlacement[]>(() => {
     kind: 'system-feedback'
   })
 
-  // Run (bottom-right) — 3 cols wide mirroring the feedback cell on
-  // the opposite corner. col: -4 + colSpan: 3 covers the last 3 cols.
-  out.push({ id: 'run', col: -4, row: -2, colSpan: 3, kind: 'system-run' })
+  // Run (bottom-right) — 5 cols wide so the label has room to breathe.
+  out.push({ id: 'run', col: -6, row: -2, colSpan: 5, kind: 'system-run' })
 
   // Batch count (one row above Run, same column span). First label/
   // widget pair broken into its own bento cell — pilots Phase 2.
   out.push({
     id: 'batch-count',
-    col: -4,
+    col: -6,
     row: -3,
-    colSpan: 3,
+    colSpan: 5,
     kind: 'system-batch-count'
   })
 

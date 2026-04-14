@@ -47,7 +47,7 @@ const { batchCount } = storeToRefs(useQueueSettingsStore())
 
 .batch-count-cell__label {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--p-text-muted-color, #a1a1a1);
   white-space: nowrap;
 }

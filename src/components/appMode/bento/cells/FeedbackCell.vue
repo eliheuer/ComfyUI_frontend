@@ -44,7 +44,7 @@ const { t } = useI18n()
 .feedback-cell__text {
   display: flex;
   flex-direction: column;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.3;
   color: var(--p-text-muted-color, #a1a1a1);
   white-space: nowrap;
