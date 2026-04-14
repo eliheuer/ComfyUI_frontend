@@ -3,61 +3,194 @@
  * BentoView — App Mode runtime view rebuilt around the bento grid.
  *
  * Prototype scope: hard-coded cell layout matching design/mockups/grid-system-001.png.
- * System-pinned cells (App, Help, Run) plus stub input/output cells. Real
- * widget/output rendering will swap into these cells in a follow-up milestone.
+ * System-pinned cells port the existing AppModeToolbar functionality:
+ *   - Mode toggle (App ↔ Graph dropdown)
+ *   - Builder (hammer)
+ *   - Share (cloud + sharing-flag only)
+ *   - Assets (sidebar tab toggle)
+ *   - Apps (sidebar tab toggle)
+ *   - Help (placeholder)
+ *   - Run (placeholder)
+ *
+ * Stub input/output cells are visible boxes for now; real widget/output
+ * rendering swaps in next.
  */
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { storeToRefs } from 'pinia'
 
-import BentoGrid from './BentoGrid.vue'
-import type { BentoCellPlacement } from './BentoGrid.vue'
+import BentoGrid from './BentoGrid.vue';
+import type { BentoCellPlacement } from './BentoGrid.vue';
+import IconCell from './cells/IconCell.vue'
 import RunCell from './cells/RunCell.vue'
-import AppCell from './cells/AppCell.vue'
 import HelpCell from './cells/HelpCell.vue'
+import ModeToggleCell from './cells/ModeToggleCell.vue'
+
+import { useAppMode } from '@/composables/useAppMode'
+import { useAppModeStore } from '@/stores/appModeStore'
+import { useCommandStore } from '@/stores/commandStore'
+import { useErrorHandling } from '@/composables/useErrorHandling'
+import { useFeatureFlags } from '@/composables/useFeatureFlags'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { isCloud } from '@/platform/distribution/types'
+import {
+  openShareDialog,
+  prefetchShareDialog
+} from '@/platform/workflow/sharing/composables/lazyShareDialog'
 
 const props = defineProps<{
-  /** Click handler for the Run cell. Provided by LinearView for now. */
+  /** Click handler for the Run cell. Provided by LinearView. */
   onRunClick?: (e: Event) => void | Promise<void>
 }>()
 
-// Hard-coded layout matching the mockup. Will become data-driven once
-// the schema fields (col/row/colSpan/rowSpan from the schema MVP) are
-// wired through the workflow's linearData on a per-card basis.
-const cells = computed<BentoCellPlacement[]>(() => [
-  // System-pinned utility cells
-  { id: 'app', col: 2, row: 1, colSpan: 2, rowSpan: 1, kind: 'system-app' },
-  { id: 'help', col: 1, row: 8, colSpan: 1, rowSpan: 1, kind: 'system-help' },
-  { id: 'run', col: 11, row: 8, colSpan: 2, rowSpan: 1, kind: 'system-run' },
+const { t } = useI18n()
+const { enableAppBuilder } = useAppMode()
+const appModeStore = useAppModeStore()
+const { enterBuilder } = appModeStore
+const { hasNodes } = storeToRefs(appModeStore)
+const commandStore = useCommandStore()
+const workspaceStore = useWorkspaceStore()
+const { toastErrorHandler } = useErrorHandling()
+const { flags } = useFeatureFlags()
 
-  // Stub input cells (placeholder — will be widget cells)
-  { id: 'input-1', col: 1, row: 1, colSpan: 1, rowSpan: 1, kind: 'input' },
-  { id: 'input-2', col: 1, row: 2, colSpan: 1, rowSpan: 1, kind: 'input' },
-  { id: 'input-3', col: 1, row: 3, colSpan: 1, rowSpan: 1, kind: 'input' },
-  { id: 'input-4', col: 1, row: 4, colSpan: 1, rowSpan: 1, kind: 'input' },
-  { id: 'input-5', col: 1, row: 5, colSpan: 1, rowSpan: 2, kind: 'input' },
-  { id: 'input-6', col: 2, row: 2, colSpan: 2, rowSpan: 3, kind: 'input' },
-  { id: 'input-7', col: 4, row: 1, colSpan: 4, rowSpan: 1, kind: 'input' },
-  { id: 'input-8', col: 4, row: 2, colSpan: 1, rowSpan: 1, kind: 'input' },
-  { id: 'input-9', col: 5, row: 2, colSpan: 1, rowSpan: 1, kind: 'input' },
-  { id: 'input-10', col: 6, row: 2, colSpan: 1, rowSpan: 1, kind: 'input' },
-  { id: 'input-11', col: 7, row: 2, colSpan: 1, rowSpan: 1, kind: 'input' },
-  { id: 'input-12', col: 4, row: 3, colSpan: 4, rowSpan: 3, kind: 'input' },
-  { id: 'input-13', col: 2, row: 6, colSpan: 1, rowSpan: 1, kind: 'input' },
-  { id: 'input-14', col: 3, row: 6, colSpan: 1, rowSpan: 1, kind: 'input' },
-  { id: 'input-15', col: 2, row: 7, colSpan: 6, rowSpan: 2, kind: 'input' },
+const isAssetsActive = computed(
+  () => workspaceStore.sidebarTab.activeSidebarTab?.id === 'assets'
+)
+const isAppsActive = computed(
+  () => workspaceStore.sidebarTab.activeSidebarTab?.id === 'apps'
+)
 
-  // Stub output cells (placeholder — will be media output cells)
-  { id: 'output-hero', col: 8, row: 1, colSpan: 5, rowSpan: 5, kind: 'output' },
-  { id: 'output-2', col: 8, row: 6, colSpan: 5, rowSpan: 1, kind: 'output' },
-  { id: 'output-3', col: 8, row: 7, colSpan: 5, rowSpan: 1, kind: 'output' },
-  { id: 'output-4', col: 8, row: 8, colSpan: 3, rowSpan: 1, kind: 'output' }
-])
+const showShare = computed(() => isCloud && flags.workflowSharingEnabled)
+
+function openAssets() {
+  void commandStore.execute('Workspace.ToggleSidebarTab.assets')
+}
+function showApps() {
+  void commandStore.execute('Workspace.ToggleSidebarTab.apps')
+}
+function openShare() {
+  openShareDialog().catch(toastErrorHandler)
+}
+
+// Layout matches design/mockups/grid-system-001.png:
+// - Col 1 holds a vertical stack of utility icon cells
+// - Col 2-3 row 1 hosts the App↔Graph mode toggle
+// - Col 1 row 8 is the Help cell
+// - Col 11-12 row 8 is the Run cell
+// - Stub input/output cells fill the remaining space for visual demo
+const cells = computed<BentoCellPlacement[]>(() => {
+  const out: BentoCellPlacement[] = []
+
+  // System-pinned utility column (col 1)
+  let row = 1
+  if (enableAppBuilder.value) {
+    out.push({ id: 'builder', col: 1, row: row++, kind: 'system-builder' })
+  }
+  if (showShare.value) {
+    out.push({ id: 'share', col: 1, row: row++, kind: 'system-share' })
+  }
+  out.push({ id: 'assets', col: 1, row: row++, kind: 'system-assets' })
+  out.push({ id: 'apps', col: 1, row: row++, kind: 'system-apps' })
+
+  // Mode toggle (col 2-3, row 1)
+  out.push({
+    id: 'mode-toggle',
+    col: 2,
+    row: 1,
+    colSpan: 2,
+    kind: 'system-mode-toggle'
+  })
+
+  // Help (bottom-left)
+  out.push({ id: 'help', col: 1, row: 8, kind: 'system-help' })
+
+  // Run (bottom-right)
+  out.push({ id: 'run', col: 11, row: 8, colSpan: 2, kind: 'system-run' })
+
+  // Stub input cells matching mockup density
+  out.push({ id: 'input-1', col: 4, row: 1, colSpan: 4, kind: 'input' })
+  out.push({ id: 'input-2', col: 4, row: 2, kind: 'input' })
+  out.push({ id: 'input-3', col: 5, row: 2, kind: 'input' })
+  out.push({ id: 'input-4', col: 6, row: 2, kind: 'input' })
+  out.push({ id: 'input-5', col: 7, row: 2, kind: 'input' })
+  out.push({
+    id: 'input-6',
+    col: 4,
+    row: 3,
+    colSpan: 4,
+    rowSpan: 3,
+    kind: 'input'
+  })
+  out.push({
+    id: 'input-7',
+    col: 2,
+    row: 2,
+    colSpan: 2,
+    rowSpan: 3,
+    kind: 'input'
+  })
+  out.push({ id: 'input-8', col: 2, row: 6, kind: 'input' })
+  out.push({ id: 'input-9', col: 3, row: 6, kind: 'input' })
+  out.push({
+    id: 'input-10',
+    col: 2,
+    row: 7,
+    colSpan: 6,
+    rowSpan: 2,
+    kind: 'input'
+  })
+  out.push({ id: 'input-11', col: 1, row: 5, rowSpan: 2, kind: 'input' })
+
+  // Stub output cells
+  out.push({
+    id: 'output-hero',
+    col: 8,
+    row: 1,
+    colSpan: 5,
+    rowSpan: 5,
+    kind: 'output'
+  })
+  out.push({ id: 'output-2', col: 8, row: 6, colSpan: 5, kind: 'output' })
+  out.push({ id: 'output-3', col: 8, row: 7, colSpan: 5, kind: 'output' })
+  out.push({ id: 'output-4', col: 8, row: 8, colSpan: 3, kind: 'output' })
+
+  return out
+})
 </script>
 
 <template>
   <div class="bento-view">
     <BentoGrid :cells="cells">
       <template v-for="cell in cells" :key="cell.id" #[cell.id]>
-        <AppCell v-if="cell.kind === 'system-app'" />
+        <IconCell
+          v-if="cell.kind === 'system-builder'"
+          icon="icon-[lucide--hammer]"
+          :label="t('linearMode.appModeToolbar.appBuilder')"
+          :disabled="!hasNodes"
+          :on-activate="enterBuilder"
+        />
+        <IconCell
+          v-else-if="cell.kind === 'system-share'"
+          icon="icon-[lucide--send]"
+          :label="t('actionbar.shareTooltip')"
+          :on-activate="openShare"
+          @pointerenter="prefetchShareDialog"
+        />
+        <IconCell
+          v-else-if="cell.kind === 'system-assets'"
+          icon="icon-[comfy--image-ai-edit]"
+          :label="t('sideToolbar.mediaAssets.title')"
+          :active="isAssetsActive"
+          :on-activate="openAssets"
+        />
+        <IconCell
+          v-else-if="cell.kind === 'system-apps'"
+          icon="icon-[lucide--panels-top-left]"
+          :label="t('linearMode.appModeToolbar.apps')"
+          :active="isAppsActive"
+          :on-activate="showApps"
+        />
+        <ModeToggleCell v-else-if="cell.kind === 'system-mode-toggle'" />
         <HelpCell v-else-if="cell.kind === 'system-help'" />
         <RunCell
           v-else-if="cell.kind === 'system-run'"
