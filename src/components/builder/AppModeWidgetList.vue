@@ -33,11 +33,20 @@ interface WidgetEntry {
   nodeId: NodeId
   widgetName: string
   persistedHeight: number | undefined
+  colSpan: number
   nodeData: ReturnType<typeof nodeToNodeData> & {
     widgets: NonNullable<ReturnType<typeof nodeToNodeData>['widgets']>
   }
   action: { widget: IBaseWidget; node: LGraphNode }
 }
+
+const GRID_COLUMNS = 4
+const WIDTH_PRESETS: { label: string; colSpan: number }[] = [
+  { label: 'Full width', colSpan: 4 },
+  { label: 'Three-quarter width', colSpan: 3 },
+  { label: 'Half width', colSpan: 2 },
+  { label: 'Quarter width', colSpan: 1 }
+]
 
 const { mobile = false, builderMode = false } = defineProps<{
   mobile?: boolean
@@ -103,6 +112,7 @@ const mappedSelections = computed((): WidgetEntry[] => {
         nodeId,
         widgetName,
         persistedHeight: config?.height,
+        colSpan: clampColSpan(config?.colSpan),
         nodeData: {
           ...fullNodeData,
           widgets: [matchingWidget]
@@ -112,6 +122,15 @@ const mappedSelections = computed((): WidgetEntry[] => {
     ]
   })
 })
+
+function clampColSpan(span: number | undefined): number {
+  if (!span || span < 1) return GRID_COLUMNS
+  return Math.min(span, GRID_COLUMNS)
+}
+
+function setColSpan(nodeId: NodeId, widgetName: string, colSpan: number) {
+  appModeStore.updateInputConfig(nodeId, widgetName, { colSpan })
+}
 
 function getDropIndicator(node: LGraphNode) {
   if (node.type !== 'LoadImage') return undefined
@@ -170,109 +189,135 @@ defineExpose({ handleDragDrop })
 </script>
 <template>
   <div
-    v-for="{
-      key,
-      nodeId,
-      widgetName,
-      persistedHeight,
-      nodeData,
-      action
-    } in mappedSelections"
-    :key
-    :class="
-      cn(
-        builderMode &&
-          'draggable-item drag-handle pointer-events-auto relative cursor-grab [&.is-draggable]:cursor-grabbing'
-      )
-    "
-    :aria-label="
-      builderMode
-        ? `${action.widget.label ?? action.widget.name} — ${action.node.title}`
+    :class="cn(!builderMode && 'grid gap-x-2', builderMode && 'contents')"
+    :style="
+      !builderMode
+        ? { gridTemplateColumns: `repeat(${GRID_COLUMNS}, minmax(0, 1fr))` }
         : undefined
     "
-    :data-testid="builderMode ? 'builder-widget-item' : 'app-mode-widget-item'"
-    :data-widget-key="key"
+    data-testid="app-mode-widget-grid"
   >
     <div
+      v-for="{
+        key,
+        nodeId,
+        widgetName,
+        persistedHeight,
+        colSpan,
+        nodeData,
+        action
+      } in mappedSelections"
+      :key
       :class="
         cn(
-          'mt-1.5 flex min-h-8 items-center gap-1 px-3',
-          builderMode && 'drag-handle'
+          builderMode &&
+            'draggable-item drag-handle pointer-events-auto relative cursor-grab [&.is-draggable]:cursor-grabbing'
         )
       "
-    >
-      <span
-        :class="cn('truncate text-sm/8', builderMode && 'pointer-events-none')"
-        data-testid="builder-widget-label"
-      >
-        {{ action.widget.label || action.widget.name }}
-      </span>
-      <span
-        v-if="builderMode"
-        class="pointer-events-none mx-1 min-w-10 flex-1 truncate text-right text-xs text-muted-foreground"
-      >
-        {{ action.node.title }}
-      </span>
-      <div v-else class="flex-1" />
-      <Popover
-        :class="cn('shrink-0', builderMode && 'pointer-events-auto')"
-        :entries="[
-          {
-            label: t('g.rename'),
-            icon: 'icon-[lucide--pencil]',
-            command: () => promptRenameWidget(action.widget, action.node, t)
-          },
-          {
-            label: t('g.remove'),
-            icon: 'icon-[lucide--x]',
-            command: () =>
-              appModeStore.removeSelectedInput(action.widget, action.node)
-          }
-        ]"
-      >
-        <template #button>
-          <Button
-            variant="textonly"
-            size="icon"
-            data-testid="widget-actions-menu"
-          >
-            <i class="icon-[lucide--ellipsis]" />
-          </Button>
-        </template>
-      </Popover>
-    </div>
-    <div
       :style="
-        persistedHeight
-          ? { '--persisted-height': `${persistedHeight}px` }
+        !builderMode
+          ? { gridColumn: `span ${colSpan} / span ${colSpan}` }
           : undefined
       "
-      :class="
-        cn(
-          builderMode && 'pointer-events-none',
-          persistedHeight &&
-            '**:data-[slot=drop-zone-indicator]:h-(--persisted-height) [&_textarea]:h-(--persisted-height)'
-        )
+      :aria-label="
+        builderMode
+          ? `${action.widget.label ?? action.widget.name} — ${action.node.title}`
+          : undefined
       "
-      :inert="builderMode || undefined"
-      @pointerdown.capture="(e) => onPointerDown(nodeId, widgetName, e)"
+      :data-testid="
+        builderMode ? 'builder-widget-item' : 'app-mode-widget-item'
+      "
+      :data-widget-key="key"
+      :data-col-span="!builderMode ? colSpan : undefined"
     >
-      <DropZone
-        :on-drag-over="nodeData.onDragOver"
-        :on-drag-drop="nodeData.onDragDrop"
-        :drop-indicator="nodeData.dropIndicator"
-        class="text-muted-foreground"
+      <div
+        :class="
+          cn(
+            'mt-1.5 flex min-h-8 items-center gap-1 px-3',
+            builderMode && 'drag-handle'
+          )
+        "
       >
-        <NodeWidgets
-          :node-data
+        <span
           :class="
-            cn(
-              'gap-y-3 rounded-lg py-1 [&_textarea]:resize-y **:[.col-span-2]:grid-cols-1 not-md:**:[.h-7]:h-10',
-              nodeData.hasErrors && 'ring-2 ring-node-stroke-error ring-inset'
-            )
+            cn('truncate text-sm/8', builderMode && 'pointer-events-none')
           "
-        />
-      </DropZone>
+          data-testid="builder-widget-label"
+        >
+          {{ action.widget.label || action.widget.name }}
+        </span>
+        <span
+          v-if="builderMode"
+          class="pointer-events-none mx-1 min-w-10 flex-1 truncate text-right text-xs text-muted-foreground"
+        >
+          {{ action.node.title }}
+        </span>
+        <div v-else class="flex-1" />
+        <Popover
+          :class="cn('shrink-0', builderMode && 'pointer-events-auto')"
+          :entries="[
+            {
+              label: t('g.rename'),
+              icon: 'icon-[lucide--pencil]',
+              command: () => promptRenameWidget(action.widget, action.node, t)
+            },
+            ...WIDTH_PRESETS.map((preset) => ({
+              label: preset.label + (colSpan === preset.colSpan ? ' ✓' : ''),
+              icon: 'icon-[lucide--columns-3]',
+              command: () => setColSpan(nodeId, widgetName, preset.colSpan)
+            })),
+            {
+              label: t('g.remove'),
+              icon: 'icon-[lucide--x]',
+              command: () =>
+                appModeStore.removeSelectedInput(action.widget, action.node)
+            }
+          ]"
+        >
+          <template #button>
+            <Button
+              variant="textonly"
+              size="icon"
+              data-testid="widget-actions-menu"
+            >
+              <i class="icon-[lucide--ellipsis]" />
+            </Button>
+          </template>
+        </Popover>
+      </div>
+      <div
+        :style="
+          persistedHeight
+            ? { '--persisted-height': `${persistedHeight}px` }
+            : undefined
+        "
+        :class="
+          cn(
+            builderMode && 'pointer-events-none',
+            persistedHeight &&
+              '**:data-[slot=drop-zone-indicator]:h-(--persisted-height) [&_textarea]:h-(--persisted-height)'
+          )
+        "
+        :inert="builderMode || undefined"
+        @pointerdown.capture="(e) => onPointerDown(nodeId, widgetName, e)"
+      >
+        <DropZone
+          :on-drag-over="nodeData.onDragOver"
+          :on-drag-drop="nodeData.onDragDrop"
+          :drop-indicator="nodeData.dropIndicator"
+          class="text-muted-foreground"
+        >
+          <NodeWidgets
+            :node-data
+            :class="
+              cn(
+                'gap-y-3 rounded-lg py-1 [&_textarea]:resize-y **:[.col-span-2]:grid-cols-1 not-md:**:[.h-7]:h-10',
+                nodeData.hasErrors && 'ring-2 ring-node-stroke-error ring-inset'
+              )
+            "
+          />
+        </DropZone>
+      </div>
     </div>
   </div>
 </template>
