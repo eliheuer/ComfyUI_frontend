@@ -29,6 +29,9 @@ const props = withDefaults(
   defineProps<{
     /** Total grid columns. Defaults to 12. */
     cols?: number
+    /** Total grid rows. Defaults to 8. The grid always fits this many
+     *  rows in the visible viewport — never scrolls. */
+    rows?: number
     /** Cell placements. Each cell's <slot> name is its id. */
     cells: BentoCellPlacement[]
     /** Outer margin around the grid (px). Defaults to 16. */
@@ -38,21 +41,35 @@ const props = withDefaults(
   }>(),
   {
     cols: 12,
+    rows: 8,
     outerPadding: 16,
     gutter: 8
   }
 )
 
-const gridStyle = computed(() => ({
-  padding: `${props.outerPadding}px`,
-  gap: `${props.gutter}px`,
-  gridTemplateColumns: `repeat(${props.cols}, minmax(0, 1fr))`,
-  // Square 1×1 cells: row height equals column width.
-  // Computed via container query on the inline size.
-  gridAutoRows: `calc((100cqi - ${props.outerPadding * 2}px - ${
+const gridStyle = computed(() => {
+  // Square 1×1 cells: side length = the smaller of (fit-width, fit-height).
+  // Uses container query units (cqi=inline-size, cqb=block-size) so the
+  // grid always fits the visible viewport in both dimensions.
+  // Whichever dimension has slack becomes the letterbox margin.
+  const widthFit = `calc((100cqi - ${props.outerPadding * 2}px - ${
     (props.cols - 1) * props.gutter
   }px) / ${props.cols})`
-}))
+  const heightFit = `calc((100cqb - ${props.outerPadding * 2}px - ${
+    (props.rows - 1) * props.gutter
+  }px) / ${props.rows})`
+  const cellSize = `min(${widthFit}, ${heightFit})`
+
+  return {
+    padding: `${props.outerPadding}px`,
+    gap: `${props.gutter}px`,
+    gridTemplateColumns: `repeat(${props.cols}, ${cellSize})`,
+    gridAutoRows: cellSize,
+    // Center the grid in the container — letterbox on the slack axis.
+    justifyContent: 'center',
+    alignContent: 'center'
+  }
+})
 
 function cellStyle(cell: BentoCellPlacement) {
   const colSpan = cell.colSpan ?? 1
@@ -81,12 +98,14 @@ function cellStyle(cell: BentoCellPlacement) {
 
 <style scoped>
 .bento-grid {
-  container-type: inline-size;
+  /* size (vs inline-size) gives us cqb units for height-aware sizing */
+  container-type: size;
   display: grid;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
   background-color: var(--p-content-background, #1a1a1a);
+  overflow: hidden;
 }
 
 .bento-cell {
