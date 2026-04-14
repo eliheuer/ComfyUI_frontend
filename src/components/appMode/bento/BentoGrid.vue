@@ -28,42 +28,59 @@ export interface BentoCellPlacement {
 
 const props = withDefaults(
   defineProps<{
-    /** 1×1 cell side length (px). Fixed — grid auto-fills viewport at this size. */
+    /** 1×1 cell side length (px). Fixed — cells never resize. */
     cellSize?: number
     /** Cell placements. Each cell's <slot> name is its id.
      *  col/row accept negative values as CSS Grid end-anchored indices
      *  (-1 = last track, -2 = second-to-last, etc.). */
     cells: BentoCellPlacement[]
-    /** Outer margin around the grid (px). Defaults to gutter value. */
+    /** Outer margin around the grid (px). Fixed — stays consistent at every viewport. */
     outerPadding?: number
-    /** Gutter between cells (px). */
-    gutter?: number
+    /** Minimum gap between cells (px). Actual gap grows from this floor
+     *  to absorb whatever slack the viewport has — so cells stay aligned
+     *  to the outer margin on all sides. */
+    minGap?: number
   }>(),
   {
     cellSize: 48,
-    gutter: 8,
-    outerPadding: 8
+    outerPadding: 16,
+    minGap: 8
   }
 )
 
 const gridEl = useTemplateRef<HTMLElement>('gridEl')
 const { width, height } = useElementSize(gridEl)
 
-// Compute explicit track counts from measured container size. Explicit
-// tracks are required for negative grid-row/column indices (-2 = last
-// track) to land predictably. auto-fill was inconsistent across nested
-// height chains.
+// Max track count that fits given min gap (tightest packing).
 const trackCount = (available: number) => {
   const usable = available - props.outerPadding * 2
-  const stride = props.cellSize + props.gutter
-  return Math.max(1, Math.floor((usable + props.gutter) / stride))
+  if (usable < props.cellSize) return 1
+  // N * cellSize + (N - 1) * minGap <= usable
+  return Math.max(
+    1,
+    Math.floor((usable + props.minGap) / (props.cellSize + props.minGap))
+  )
 }
+
+// Actual gap distributes remaining slack evenly between tracks so the
+// grid snaps to the outer margin on all sides — no slack piles up at
+// the bottom or right edge.
+const axisGap = (available: number, trackN: number) => {
+  if (trackN <= 1) return props.minGap
+  const usable = available - props.outerPadding * 2
+  const cellsTotal = trackN * props.cellSize
+  return (usable - cellsTotal) / (trackN - 1)
+}
+
 const cols = computed(() => trackCount(width.value))
 const rows = computed(() => trackCount(height.value))
+const columnGap = computed(() => axisGap(width.value, cols.value))
+const rowGap = computed(() => axisGap(height.value, rows.value))
 
 const gridStyle = computed(() => ({
   padding: `${props.outerPadding}px`,
-  gap: `${props.gutter}px`,
+  columnGap: `${columnGap.value}px`,
+  rowGap: `${rowGap.value}px`,
   gridTemplateColumns: `repeat(${cols.value}, ${props.cellSize}px)`,
   gridTemplateRows: `repeat(${rows.value}, ${props.cellSize}px)`
 }))
