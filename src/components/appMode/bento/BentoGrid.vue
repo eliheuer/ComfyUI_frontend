@@ -8,7 +8,8 @@
  *
  * Cells snap to integer column/row positions and integer span values.
  */
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
+import { useElementSize } from '@vueuse/core'
 
 export interface BentoCellPlacement {
   /** Stable identifier for the cell. */
@@ -45,17 +46,27 @@ const props = withDefaults(
   }
 )
 
-const gridStyle = computed(() => {
-  // auto-fill creates as many tracks as fit the container at cellSize,
-  // so the grid grows/shrinks with the viewport. Cells placed at negative
-  // indices (col: -2, row: -1 etc.) anchor to the right/bottom.
-  return {
-    padding: `${props.outerPadding}px`,
-    gap: `${props.gutter}px`,
-    gridTemplateColumns: `repeat(auto-fill, ${props.cellSize}px)`,
-    gridTemplateRows: `repeat(auto-fill, ${props.cellSize}px)`
-  }
-})
+const gridEl = useTemplateRef<HTMLElement>('gridEl')
+const { width, height } = useElementSize(gridEl)
+
+// Compute explicit track counts from measured container size. Explicit
+// tracks are required for negative grid-row/column indices (-2 = last
+// track) to land predictably. auto-fill was inconsistent across nested
+// height chains.
+const trackCount = (available: number) => {
+  const usable = available - props.outerPadding * 2
+  const stride = props.cellSize + props.gutter
+  return Math.max(1, Math.floor((usable + props.gutter) / stride))
+}
+const cols = computed(() => trackCount(width.value))
+const rows = computed(() => trackCount(height.value))
+
+const gridStyle = computed(() => ({
+  padding: `${props.outerPadding}px`,
+  gap: `${props.gutter}px`,
+  gridTemplateColumns: `repeat(${cols.value}, ${props.cellSize}px)`,
+  gridTemplateRows: `repeat(${rows.value}, ${props.cellSize}px)`
+}))
 
 function cellStyle(cell: BentoCellPlacement) {
   const colSpan = cell.colSpan ?? 1
@@ -68,7 +79,12 @@ function cellStyle(cell: BentoCellPlacement) {
 </script>
 
 <template>
-  <div class="bento-grid" :style="gridStyle" data-testid="bento-grid">
+  <div
+    ref="gridEl"
+    class="bento-grid"
+    :style="gridStyle"
+    data-testid="bento-grid"
+  >
     <div
       v-for="cell in cells"
       :key="cell.id"
