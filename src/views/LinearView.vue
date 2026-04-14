@@ -117,10 +117,17 @@ function dragDrop(e: DragEvent) {
         <TopbarSubscribeButton />
       </div>
     </div>
-    <BentoView
+    <div
       v-if="showBentoView"
-      class="h-[calc(100%-var(--workflow-tabs-height))] w-full"
-    />
+      class="relative h-[calc(100%-var(--workflow-tabs-height))] w-full"
+    >
+      <BentoView class="absolute inset-0" />
+      <!-- TEMPORARY overlay: AppModeToolbar contains the App↔Graph toggle.
+           Will be ported into the bento grid as system-pinned cells next. -->
+      <div class="pointer-events-auto absolute top-2 left-4.5 z-21">
+        <AppModeToolbar />
+      </div>
+    </div>
     <Splitter
       v-else
       :key="splitterKey"

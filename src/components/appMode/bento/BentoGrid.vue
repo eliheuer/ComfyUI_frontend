@@ -97,7 +97,10 @@ function cellStyle(cell: BentoCellPlacement) {
   min-height: 0;
 }
 
-.bento-cell:has(> :not(:empty)) {
+/* Any cell with rendered slot content gets the subtle fill.
+   Truly empty cells (no slot content) have no children → no background,
+   keeping the runtime canvas composed rather than gridded. */
+.bento-cell:has(> *) {
   background-color: var(--p-surface-800, #2a2a2a);
   border-radius: 4px;
 }
