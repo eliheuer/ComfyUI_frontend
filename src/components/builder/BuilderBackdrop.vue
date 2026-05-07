@@ -91,12 +91,15 @@ const gridSpacing = computed(() => {
 </script>
 
 <template>
-  <!-- z-50 above graph canvas, below AppChrome / FloatingPanel / toolbar. -->
+  <!-- z-50 above graph canvas, below AppChrome / FloatingPanel / toolbar.
+       Pan/zoom handlers live on the full-viewport backdrop (not the
+       transformed inner workspace) so a panned workspace doesn't leave
+       a dead zone where new pan/zoom gestures can't start. -->
   <div
     v-if="isArrangeMode"
     :class="
       cn(
-        'builder-backdrop pointer-events-none fixed z-50 overflow-hidden',
+        'builder-backdrop fixed z-50 overflow-hidden',
         'top-(--workflow-tabs-height) right-0 bottom-0',
         'left-(--sidebar-width,0px)',
         'bg-layout-canvas',
@@ -107,14 +110,14 @@ const gridSpacing = computed(() => {
       backgroundSize: `${gridSpacing}px ${gridSpacing}px`,
       backgroundPosition: `${viewportOffsetX}px ${viewportOffsetY}px`
     }"
+    @wheel="handleWheel"
+    @pointerdown="handlePointerDown"
+    @dragstart.prevent
   >
     <div
       ref="bgRef"
       class="builder-backdrop__workspace absolute inset-0 flex flex-col"
       :style="{ transform: workspaceTransform }"
-      @wheel="handleWheel"
-      @pointerdown="handlePointerDown"
-      @dragstart.prevent
     >
       <LinearPreview hide-chrome />
     </div>
