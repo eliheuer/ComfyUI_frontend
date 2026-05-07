@@ -121,7 +121,7 @@ const { isDragging: dragging, start: handleHeaderPointerDown } = usePointerDrag(
   {
     stopPropagation: true,
     onStart: (e) => {
-      if (e.button !== 0) return false
+      if (e.button !== 0 || noZoomMode.value) return false
       // Promote even when maximized; only drag is gated.
       emit('promote')
       if (maximized.value) return false
@@ -176,7 +176,7 @@ const { isDragging: resizing, start: handleResizePointerDown } = usePointerDrag(
   {
     stopPropagation: true,
     onStart: (e) => {
-      if (e.button !== 0) return false
+      if (e.button !== 0 || noZoomMode.value) return false
       emit('promote')
       if (maximized.value) return false
       const dir = (e.currentTarget as HTMLElement).dataset.resizeDir as
@@ -296,7 +296,7 @@ const showHeader = computed(() => {
     <PanelHeader
       v-if="showHeader"
       :title="title || t('linearMode.outputs.title')"
-      :draggable="!maximized"
+      :draggable="!maximized && !noZoomMode"
       :dragging="dragging"
       :collapsible="false"
       :menu-entries="menuEntries"
@@ -343,7 +343,7 @@ const showHeader = computed(() => {
          the tile edge so half is inside the tile and half overhangs;
          this widens the click target without making the visible
          border feel thicker. -->
-    <template v-if="!maximized">
+    <template v-if="!maximized && !noZoomMode">
       <div
         data-resize-dir="n"
         class="absolute inset-x-5 -top-1.5 z-30 h-3 cursor-n-resize"
