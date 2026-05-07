@@ -1,8 +1,8 @@
+import type { ComfyPage } from '@e2e/fixtures/ComfyPage'
 import {
   comfyPageFixture as test,
   comfyExpect as expect
 } from '@e2e/fixtures/ComfyPage'
-import type { AppModeHelper } from '@e2e/fixtures/helpers/AppModeHelper'
 import type { BuilderSaveAsHelper } from '@e2e/fixtures/helpers/BuilderSaveAsHelper'
 import {
   builderSaveAs,
@@ -17,11 +17,11 @@ import { fitToViewInstant } from '@e2e/fixtures/utils/fitToView'
  * and save. Replaces the retired footer chevron affordance.
  */
 async function reSaveAs(
-  appMode: AppModeHelper,
+  comfyPage: ComfyPage,
   workflowName: string,
   viewType: 'App' | 'Node graph'
 ) {
-  const page = appMode.footer.nav.page()
+  const { page, appMode } = comfyPage
   await page.getByRole('button', { name: 'App builder' }).click()
   await page.getByRole('button', { name: 'Save as' }).click()
   await expect(appMode.saveAs.nameInput).toBeVisible()
@@ -257,7 +257,7 @@ test.describe('Builder save flow', { tag: ['@ui'] }, () => {
     await dismissSuccessDialog(appMode.saveAs)
 
     // Re-save as node graph — creates a copy
-    await reSaveAs(appMode, `${Date.now()} copy`, 'Node graph')
+    await reSaveAs(comfyPage, `${Date.now()} copy`, 'Node graph')
     await expect(appMode.saveAs.successMessage).toBeVisible()
 
     await expect
@@ -290,7 +290,7 @@ test.describe('Builder save flow', { tag: ['@ui'] }, () => {
       .toContain('.app.json')
     const pathAfterFirst = await comfyPage.workflow.getActiveWorkflowPath()
 
-    await reSaveAs(appMode, name, 'App')
+    await reSaveAs(comfyPage, name, 'App')
 
     await expect(appMode.saveAs.overwriteDialog).toBeVisible()
     await appMode.saveAs.overwriteButton.click()
@@ -317,7 +317,7 @@ test.describe('Builder save flow', { tag: ['@ui'] }, () => {
     const pathAfterFirst = await comfyPage.workflow.getActiveWorkflowPath()
     await dismissSuccessDialog(appMode.saveAs)
 
-    await reSaveAs(appMode, name, 'Node graph')
+    await reSaveAs(comfyPage, name, 'Node graph')
     await expect(appMode.saveAs.successMessage).toBeVisible()
 
     await expect
