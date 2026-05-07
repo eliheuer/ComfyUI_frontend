@@ -80,7 +80,7 @@ async function runFromPill(e: MouseEvent) {
                 cn(
                   'mx-1 translate-y-px transform px-3 py-1 text-sm',
                   'border-0 bg-success-background hover:brightness-110',
-                  'text-success-foreground'
+                  'text-(--success-foreground)'
                 )
               "
               @click="runFromPill"

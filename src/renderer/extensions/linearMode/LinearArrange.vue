@@ -90,7 +90,7 @@ const existingOutput = computed(() => {
       size="lg"
       :class="
         cn(
-          'border bg-primary-background text-primary-foreground',
+          'border bg-primary-background text-(--primary-foreground)',
           'border-primary-background-hover',
           'hover:bg-primary-background-hover'
         )
