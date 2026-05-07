@@ -151,6 +151,11 @@ watch(
 )
 
 function handleWheel(e: WheelEvent) {
+  // Only intercept wheel events that originated inside the workspace
+  // (bgRef + its descendants). Events from the floating panel and the
+  // chrome should bubble naturally so panel content can scroll.
+  const bg = bgRef.value
+  if (!bg || !(e.target instanceof Node) || !bg.contains(e.target)) return
   e.preventDefault()
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   appModeStore.zoomAt(e.clientX, e.clientY, e.deltaY, rect)
