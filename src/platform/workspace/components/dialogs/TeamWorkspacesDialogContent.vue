@@ -68,7 +68,7 @@
                 </span>
               </div>
             </div>
-            <span class="shrink-0 text-sm font-medium text-primary-foreground">
+            <span class="text-primary-foreground shrink-0 text-sm font-medium">
               {{ $t('teamWorkspacesDialog.switch') }}
               <i class="pi pi-arrow-right text-xs" aria-hidden="true" />
             </span>
