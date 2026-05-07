@@ -115,21 +115,30 @@ function downloadOutput(entry: OutputWindowEntry): void {
   if (url) downloadFile(url)
 }
 
-async function loadAssetWorkflow(entry: OutputWindowEntry): Promise<void> {
+async function loadAssetWorkflow(entry: OutputWindowEntry): Promise<boolean> {
   const asset = entry.asset
-  if (!asset) return
+  if (!asset) return false
   const { workflow } = await extractWorkflowFromAsset(asset)
-  if (!workflow) return
-  if (workflow.id !== app.rootGraph?.id) return app.loadGraphData(workflow)
+  if (!workflow) return false
+  if (workflow.id !== app.rootGraph?.id) {
+    await app.loadGraphData(workflow)
+    return true
+  }
   const changeTracker = useWorkflowStore().activeWorkflow?.changeTracker
-  if (!changeTracker) return app.loadGraphData(workflow)
+  if (!changeTracker) {
+    await app.loadGraphData(workflow)
+    return true
+  }
   changeTracker.redoQueue = []
   await changeTracker.updateState([workflow], changeTracker.undoQueue)
+  return true
 }
 
 async function rerunWindow(entry: OutputWindowEntry): Promise<void> {
   try {
-    await loadAssetWorkflow(entry)
+    // Don't fall through to QueuePrompt on no-workflow — that would
+    // run the currently loaded graph instead of the output's source.
+    if (!(await loadAssetWorkflow(entry))) return
   } catch (error) {
     toastErrorHandler(error)
     return
