@@ -26,12 +26,16 @@ interface InputEntryWithMeta extends InputCellEntry {
 export function useAppPanelLayout() {
   const appModeStore = useAppModeStore()
 
-  // Re-resolve on graph reconfigure so stale entries prune.
-  const graphNodes = shallowRef<LGraphNode[]>(app.rootGraph?.nodes ?? [])
+  // Re-resolve on graph reconfigure so stale entries prune. Spread
+  // into a new array on each assignment because LiteGraph reuses the
+  // same `nodes` array reference across configures — assigning the
+  // same ref into a shallowRef is a no-op, so inputEntries wouldn't
+  // recompute and stale entries would survive.
+  const graphNodes = shallowRef<LGraphNode[]>([...(app.rootGraph?.nodes ?? [])])
   useEventListener(
     () => app.rootGraph?.events,
     'configured',
-    () => (graphNodes.value = app.rootGraph?.nodes ?? [])
+    () => (graphNodes.value = [...(app.rootGraph?.nodes ?? [])])
   )
 
   const inputEntries = computed<InputEntryWithMeta[]>(() => {
