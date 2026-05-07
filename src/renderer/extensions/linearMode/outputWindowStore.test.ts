@@ -73,6 +73,29 @@ describe('outputWindowStore', () => {
       expect(ids).toContain('mid-latent')
       expect(ids).not.toContain('old-final')
     })
+
+    it('eviction respects creation order even after promote() rewrites zIndex', () => {
+      // Regression for the bug where eviction sorted by mutable zIndex.
+      // User clicks an OLD tile (promote raises its zIndex above all
+      // others); a NEW tile then arrives and triggers prune. The OLD
+      // tile must still evict before any newer untouched tile, because
+      // creation order — not click recency — is the eviction contract.
+      mockAppModeState.noZoomMode = true
+      store.upsert('old-clicked', { state: 'image' })
+      for (let i = 0; i < MAX_TILES - 1; i++) {
+        store.upsert(`mid-${i}`, { state: 'image' })
+      }
+      // User clicks the oldest tile, raising its zIndex to the top.
+      store.promote('old-clicked')
+
+      // Now spawn one more, triggering prune.
+      store.upsert('newest', { state: 'image' })
+
+      const ids = store.windows.map((w) => w.id)
+      expect(ids.length).toBe(MAX_TILES)
+      expect(ids).toContain('newest')
+      expect(ids).not.toContain('old-clicked')
+    })
   })
 
   describe('mutations', () => {

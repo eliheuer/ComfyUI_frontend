@@ -92,11 +92,15 @@ interface Rect {
 // Eviction priority: higher = kept longer, lower = evicted first.
 // In-flight tiles ('skeleton' / 'latent') sit above any finalized tile
 // so we never silently drop a generation that's still streaming.
-// Within each tier, higher zIndex (newer) wins.
+// Within each tier, the newer tile (higher createdSeq) wins. Use
+// `createdSeq` rather than `zIndex` because `promote()` rewrites
+// zIndex on every user click — eviction by zIndex would mean a
+// recently-clicked old tile outranks newer untouched finalized tiles
+// during pruning, contrary to the "oldest evicts first" contract.
 const EVICTION_INFLIGHT_BOOST = 1e9
 function evictionScore(w: OutputWindowEntry): number {
   const tier = w.state === 'image' ? 0 : EVICTION_INFLIGHT_BOOST
-  return tier + w.zIndex
+  return tier + w.createdSeq
 }
 
 // Place tiles on the chrome cell grid: feature on the side opposite
