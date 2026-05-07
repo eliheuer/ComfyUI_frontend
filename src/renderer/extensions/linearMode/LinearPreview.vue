@@ -70,10 +70,12 @@ watch(
   }
 )
 function formatEta(s: number): string {
-  if (s < 60) return `${s}s`
+  if (s < 60) return t('linearMode.outputs.etaSeconds', { count: s })
   const m = Math.floor(s / 60)
   const rem = s % 60
-  return rem > 0 ? `${m}m ${rem}s` : `${m}m`
+  return rem > 0
+    ? t('linearMode.outputs.etaMinutesSeconds', { minutes: m, seconds: rem })
+    : t('linearMode.outputs.etaMinutes', { count: m })
 }
 const { allOutputs, isWorkflowActive, cancelActiveWorkflowJobs } =
   useOutputHistory()

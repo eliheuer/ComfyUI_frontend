@@ -23,6 +23,7 @@
  * on its return value. If you need to know what kind of widget
  * something is, read `spec.type` directly.
  */
+import { t } from '@/i18n'
 import type { SimplifiedWidget } from '@/types/simplifiedWidget'
 
 type WidgetSubtitleInput = Partial<
@@ -30,30 +31,31 @@ type WidgetSubtitleInput = Partial<
 >
 
 /**
- * Short, user-facing word for each canonical input-spec type.
+ * Translation key for each canonical input-spec type. Resolved via
+ * `t()` at call time so the panel surfaces in the active locale.
  * Keys are uppercase-normalized so we can compare against either
  * `spec.type` (`'INT'`, `'STRING'`, …) or the render type
  * (`'number'`, `'text'`, …) without two tables.
  */
-const TYPE_LABELS: Readonly<Record<string, string>> = {
+const TYPE_LABEL_KEYS: Readonly<Record<string, string>> = {
   // Backend types (zod-validated input spec).
-  STRING: 'text',
-  INT: 'number',
-  FLOAT: 'number',
-  BOOLEAN: 'toggle',
-  COMBO: 'list',
-  TEXTAREA: 'text',
-  MARKDOWN: 'text',
-  COLOR: 'color',
-  IMAGE: 'image',
+  STRING: 'linearMode.widgetSubtitle.text',
+  INT: 'linearMode.widgetSubtitle.number',
+  FLOAT: 'linearMode.widgetSubtitle.number',
+  BOOLEAN: 'linearMode.widgetSubtitle.toggle',
+  COMBO: 'linearMode.widgetSubtitle.list',
+  TEXTAREA: 'linearMode.widgetSubtitle.text',
+  MARKDOWN: 'linearMode.widgetSubtitle.text',
+  COLOR: 'linearMode.widgetSubtitle.color',
+  IMAGE: 'linearMode.widgetSubtitle.image',
   // Render types (the simplified widget's `type` field — usually
   // mirrors the backend type but lossier).
-  NUMBER: 'number',
-  TEXT: 'text',
-  CUSTOMTEXT: 'text',
-  TOGGLE: 'toggle',
-  SLIDER: 'number',
-  KNOB: 'number'
+  NUMBER: 'linearMode.widgetSubtitle.number',
+  TEXT: 'linearMode.widgetSubtitle.text',
+  CUSTOMTEXT: 'linearMode.widgetSubtitle.text',
+  TOGGLE: 'linearMode.widgetSubtitle.toggle',
+  SLIDER: 'linearMode.widgetSubtitle.number',
+  KNOB: 'linearMode.widgetSubtitle.number'
 }
 
 /**
@@ -67,14 +69,17 @@ const TYPE_LABELS: Readonly<Record<string, string>> = {
  *
  * Order matters: first match wins.
  */
-const NAME_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
+const NAME_PATTERN_KEYS: ReadonlyArray<readonly [RegExp, string]> = [
   // Dimensional inputs (width, height, *_size, dimensions). Almost
   // always paired in the panel; "number / number" reads as a single
   // anonymous concept where "size / size" surfaces the relationship.
-  [/(?:^|_)(?:width|height|size|dimensions?)(?:$|_)/i, 'size'],
+  [
+    /(?:^|_)(?:width|height|size|dimensions?)(?:$|_)/i,
+    'linearMode.widgetSubtitle.size'
+  ],
   // Seed has its own semantic role (reproducibility) distinct from a
   // generic int input.
-  [/(?:^|_)seed(?:$|_)/i, 'seed']
+  [/(?:^|_)seed(?:$|_)/i, 'linearMode.widgetSubtitle.seed']
 ]
 
 export function widgetSubtitle(widget: WidgetSubtitleInput): string {
@@ -82,11 +87,15 @@ export function widgetSubtitle(widget: WidgetSubtitleInput): string {
   // fallback for the brief pre-mount window and legacy widgets.
   const rawType = widget.spec?.type ?? widget.type ?? ''
   const typeKey = String(rawType).toUpperCase()
-  const typeLabel = TYPE_LABELS[typeKey] ?? typeKey.toLowerCase()
+  const typeLabelKey = TYPE_LABEL_KEYS[typeKey]
+  // Unknown legacy types fall through to the lowercased raw type —
+  // not localized, but those cases are developer-facing pre-mount
+  // glitches, not user-facing copy.
+  const typeLabel = typeLabelKey ? t(typeLabelKey) : typeKey.toLowerCase()
 
   const name = widget.name ?? ''
-  for (const [pattern, label] of NAME_PATTERNS) {
-    if (pattern.test(name)) return label
+  for (const [pattern, key] of NAME_PATTERN_KEYS) {
+    if (pattern.test(name)) return t(key)
   }
 
   return typeLabel

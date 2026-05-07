@@ -18,12 +18,15 @@ const props = defineProps<{
 
 const presetClass = computed(() => PANEL_PRESET_CLASSES[props.preset])
 const isDocked = computed(() => isDockPreset(props.preset))
-// Skip explicit height on docks — would override the bottom anchor.
+// Skip explicit width + height on docks — docks are slot-sized, so
+// applying the floating-panel dimensions would override the dock's
+// CSS variable widths and bottom anchor.
 const sizeStyle = computed(() => {
   const style: Record<string, string> = {}
   if (!isDocked.value && props.panelHeight != null)
     style.height = `${props.panelHeight}px`
-  if (props.panelWidth != null) style.width = `${props.panelWidth}px`
+  if (!isDocked.value && props.panelWidth != null)
+    style.width = `${props.panelWidth}px`
   return Object.keys(style).length > 0 ? style : undefined
 })
 </script>

@@ -25,7 +25,7 @@ const emit = defineEmits<{ activate: [] }>()
         { 'bg-layout-cell-hover': active }
       )
     "
-    :aria-label="label"
+    :aria-label="inlineLabel ? undefined : label"
     :title="label"
     :disabled="disabled"
     @click="emit('activate')"

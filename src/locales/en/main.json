@@ -3390,12 +3390,25 @@
       "maximize": "Maximize to workspace",
       "restore": "Restore window",
       "step": "step {value}/{max}",
+      "etaSeconds": "{count}s",
+      "etaMinutes": "{count}m",
+      "etaMinutesSeconds": "{minutes}m {seconds}s",
       "etaRemaining": "{eta} remaining",
       "closeWindow": "Close window",
       "clearAll": "Clear all output windows"
     },
     "inputs": {
       "title": "Input"
+    },
+    "widgetSubtitle": {
+      "text": "text",
+      "number": "number",
+      "toggle": "toggle",
+      "list": "list",
+      "color": "color",
+      "image": "image",
+      "size": "size",
+      "seed": "seed"
     },
     "builder": {
       "title": "App builder mode",
